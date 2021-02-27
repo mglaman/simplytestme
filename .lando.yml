@@ -1,0 +1,65 @@
+name: simplytest-me
+recipe: drupal9
+
+config:
+  php: "7.3"
+  webroot: web
+  xdebug: false
+  database: mariadb:10.3
+
+events:
+  # Clear cache after a database import
+  post-db-import:
+    - appserver: cd $LANDO_WEBROOT && drush cache-rebuild --yes
+
+services:
+  appserver:
+    run:
+      - cd $LANDO_MOUNT && composer install --no-scripts
+
+  nodejs:
+    type: node:14
+    run:
+      - cd $LANDO_MOUNT/web/profiles/contrib/simplytest/themes/simplytest_theme && npm install
+      - cd $LANDO_MOUNT/web/profiles/contrib/simplytest/themes/simplytest_theme && npm run build
+
+tooling:
+  drush:
+    service: appserver
+    env:
+      DRUSH_OPTIONS_URI: "https://simplytest-me.lndo.site/"
+  compile:
+    service: nodejs
+    cmd: cd $LANDO_MOUNT/web/profiles/contrib/simplytest/themes/simplytest_theme && npm run build
+  node:
+    service: nodejs
+  npm:
+    service: nodejs
+  phpunit:
+    service: appserver
+    cmd: vendor/bin/phpunit
+  phpcs:
+    service: appserver
+    cmd: vendor/bin/phpcs
+  si:
+    service: appserver
+    cmd: drush si simplytest --existing-config --account-pass=admin --yes
+    env:
+      DRUSH_OPTIONS_URI: "https://simplytest-me.lndo.site/"
+
+  # Tooling to enable/disable Xdebug (see https://github.com/AaronFeledy/lando-examples/tree/master/xdebug )
+  xdebug-on:
+    service: appserver
+    description: Enable Xdebug.
+    user: root
+    cmd:
+      - docker-php-ext-enable xdebug && pkill -o -USR2 php-fpm || /etc/init.d/apache2 reload
+      - tput setaf 2 && echo "Xdebug On" && tput sgr 0 && echo
+
+  xdebug-off:
+    service: appserver
+    description: Disable Xdebug.
+    user: root
+    cmd:
+      - rm /usr/local/etc/php/conf.d/docker-php-ext-xdebug.ini && pkill -o -USR2 php-fpm || /etc/init.d/apache2 reload
+      - tput setaf 1 && echo "Xdebug Off" && tput sgr 0 && echo

@@ -2,9 +2,10 @@
 
 This is a Composer project for setting up and running Simplytest for develoment.
 
-It uses DDEV for local development, but is not a requirement.
+For convenience, this project is configured to use either DDEV or Lando for
+local development. You can use any local development environment you prefer.
 
-## Installation
+## Installation with DDEV
 
 Clone this repo and run `composer install`.
 
@@ -16,9 +17,22 @@ The run the following command to install the site locally:
 ddev si
 ```
 
+## Installation with Lando
+
+Clone this repo.
+
+Run `lando start`. This will automatically run `composer install` from the
+`appserver` container. It also runs `npm install` in the theme directory, using
+the `nodejs` container.
+
+Run `lando si`. This will install the site locally.
+
+If you are working on the theme, then you can run `lando compile` to generate
+the CSS and JavaScript assets.
+
 ## Tests
 
-To run the tests for Simplytests, you can run the following command:
+To run the tests for Simplytest, you can run the following command:
 
 ```
 composer run tests
